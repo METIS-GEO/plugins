@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/coller" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
