@@ -198,20 +198,15 @@ class coller:
         layers = self.iface.legendInterface().layers();
         layer = layers[idx-1]
         currLayer = self.iface.activeLayer()
-        features = currLayer.selectedFeatures() # get features to paste
+        features = currLayer.selectedFeatures() # get features to paste        
         countFeatures = len(features)
-        if countFeatures>0: # display numbers of object selected        
-            msg=str(countFeatures)+" objets"
-            self.dlg.textEdit.setText(msg)
-        else :
-            self.dlg.textEdit.setText("No features selected")
         return self.getLayerFromCombo(True)        
         
 
     # This method will be called when you click the toolbar button or select the plugin menu item
     def run(self):
         """Run method that performs all the real work."""            
-        layer_list = [""]
+        layer_list = ["Select layers..."]
         self.dlg.comboBox.clear()
         layers = self.iface.legendInterface().layers()
         nativeLayer = self.iface.activeLayer() # get current active layer
@@ -222,7 +217,12 @@ class coller:
         # params layer / liste [layerName]
         self.dlg.comboBox.currentIndexChanged.connect(self.getComboSelection) # set event when user click on combo value        
         self.iface.legendInterface().setCurrentLayer(nativeLayer)        
-        self.iface.actionCopyFeatures().trigger() # copy features from current active layer                
+        self.iface.actionCopyFeatures().trigger() # copy features from current active layer
+        features = nativeLayer.selectedFeatures()
+        if len(features) > 0:
+            nbFeatures = str(len(features))
+            text = nbFeatures+u" objets sélectionnés";            
+            self.dlg.textEdit.setText(text)
         # show the dialog
         self.dlg.show()        
         # Run the dialog event loop
