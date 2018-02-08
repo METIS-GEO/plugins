@@ -245,10 +245,10 @@ class AdnReport:
         
     def layersToCombo(self, combo):
         """Create array to use map layers"""
-        layer = "";
+        layer = ""
         layer_list= []
         layers = self.iface.legendInterface().layers();
-        for layer in layers :
+        for layer in layers:
             if layer.name() and layer.type() == 0:
                 layer_list.append(layer.name())
         combo.addItems(layer_list)
@@ -308,14 +308,12 @@ class AdnReport:
                     idAttr = feature.attributes()[posId] # on prend la valeur de l'id pour la feature                    
                     if state == defaultValue :
                         oppResult.append(idAttr)
-                        v = self.dlg.textInfos.toPlainText()
                     else:
                         stateAttr = feature.attributes()[posState] # on prend le statut pour cette même feature                                        
                         isFilter = self.isInList(state,filterVal) # on test si la valeur sélectionnée est dans la liste des statuts                
                         if isFilter != False or isFilter > -1: # si c'est le cas, alors on filtre                                                                    
                             if stateAttr == state: # on filtre donc sur le statut souhaité pour ne prendre que les features qui ont un statut identique au statut sélectionné                            
                                 oppResult.append(idAttr) # on ajoutera la feature dans une liste        
-                                v = self.dlg.textInfos.toPlainText()                                
             return oppResult
         # return sum of opportunity for each combo whithout duplicate value
         listGc = getOppFromLayer(gcLayer, idFromGc, cbOfState, cbO)  
@@ -383,7 +381,6 @@ class AdnReport:
                         docName = folder+"/gc.csv"             
                     elif "synthese" in layer.name() or "Synthese" in layer.name() or "Synthèse" in layer.name() or "synthèse" in layer.name(): 
                         docName = folder+"/synthese.csv"
-                    self.dlg.textInfos.setText(docName)
                     # control docname is not wrong
                     if docName != False:
                         output_file = open(docName,"w")
