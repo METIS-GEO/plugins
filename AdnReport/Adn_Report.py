@@ -196,7 +196,7 @@ class AdnReport:
         return res    
     
     def rmDblToCombo(self,array,cb):
-        cb.clear()
+        cb.clear() # clean
         cb.addItem("Select all opportunity")
         """Remove dupplicate value from given array and import unic values to given combo"""
         cb.setEnabled(True);        
@@ -212,21 +212,26 @@ class AdnReport:
         
     
     def searchFile(self):        
+        wrongText = "Please, select valid file !"
         """Open window to search template file"""
         """Update text box with path value"""
         def test(string, expression):
             test = False
             if string in expression:
                 test = True
-            return test        
-        validFormat = "xls"
+            return test                
         file = QtGui.QFileDialog.getOpenFileName(None, 'Open file')
-        """Valid file format"""
-        isValid = test(validFormat, file)
-        if not isValid or isValid == "" :
-            file = "Please, select valid file !"
-        """Update text box with path value"""
-        return self.dlg.pathTpl.setText(file)
+        if os.path.exists(file) :
+            # control file is valid
+            for elem in ["xls","xlsm"]:
+                isValid = test(elem, file)                
+                if isValid:
+                    return self.dlg.pathTpl.setText(file)
+                else :
+                    
+                    return self.dlg.pathTpl.setText(wrongText)
+        else :
+            self.dlg.pathTpl.setText(wrongText)
 
     def searchFolder(self):
         """Method to get path in order to export file to path"""        
@@ -235,8 +240,10 @@ class AdnReport:
         self.dlg.pathFolder.setText(folder)
 
     def getLayerFromCb(self, cbString):
+        """Function to return layer item from combo string value"""
         res = False
-        layers = self.iface.legendInterface().layers();
+        # get layers from qgis interface
+        layers = self.iface.legendInterface().layers()
         for x in layers:
             if x.name() == cbString:
                 res = x
@@ -244,10 +251,11 @@ class AdnReport:
         return res
         
     def layersToCombo(self, combo):
-        """Create array to use map layers"""
+        """Create array from interface layers to be insert in given combobox """
         layer = ""
         layer_list= []
-        layers = self.iface.legendInterface().layers();
+        # get layers from qgis interface
+        layers = self.iface.legendInterface().layers()
         for layer in layers:
             if layer.name() and layer.type() == 0:
                 layer_list.append(layer.name())
@@ -349,14 +357,13 @@ class AdnReport:
             self.rmDblToCombo(attributes,cb)
         else :            
             cb.setEnabled(False)
-
     def createFile(self):
         """create folder to contain report by opportunity"""        
         listOpp = self.cbStateEl(self.dlg.cbOpp)  
         layers = [
             self.getLayerFromCb(self.dlg.comboGC.currentText()),
             self.getLayerFromCb(self.dlg.comboSynthese.currentText())            
-        ]         
+        ]                 
         selectOpp = self.dlg.cbOpp.currentText() #get selected value in combo
         defaultValue = self.dlg.cbOpp.itemText(0)
         if(selectOpp) != defaultValue:
@@ -370,42 +377,48 @@ class AdnReport:
             if not os.path.exists(folder):
                 os.makedirs(folder)
             '''copy template'''
-            template = self.dlg.pathTpl.text()
-            shutil.copy(template,folder) # copie du template
-            '''export to csv'''
-            for layer in layers: # traitement par couche
-                if layer != False:
-                    docName = False
-                    # create csv file
-                    if "gc" in layer.name() or "GC" in layer.name() or "Gc" in layer.name():
-                        docName = folder+"/gc.csv"             
-                    elif "synthese" in layer.name() or "Synthese" in layer.name() or "Synthèse" in layer.name() or "synthèse" in layer.name(): 
-                        docName = folder+"/synthese.csv"
-                    # control docname is not wrong
-                    if docName != False:
-                        output_file = open(docName,"w")
-                        # get and add fields to csv
-                        fields = layer.pendingFields()
-                        fieldname = [field.name() for field in fields]
-                        lineField = line = ",".join(fieldname) + "\n"
-                        unicode_fields = lineField.encode("utf-8")                                        
-                        output_file.write(unicode_fields)
-                        # filter features to add to csv
-                        features = layer.getFeatures()                                       
-                        for f in features:                      
-                            # get attribute  
-                            attr = [el for el in f.attributes()]
-                            # parse all feature's values
-                            for val in range(len(attr)):
-                                item = attr[val]                                                                                       
-                                if item == opp:                                         
-                                    find = self.isInList(val, listOpp)                                
-                                    # if feature is search write in csv
-                                    if find != False or find > -1:
-                                        line = ",".join(unicode(f[x]) for x in fieldname) + "\n"
-                                        unicode_line = line.encode("utf-8")                                
-                                        output_file.write(unicode_line)                        
-                        output_file.close()                                                    
+            template = self.dlg.pathTpl.text()    
+            if os.path.exist(template) :                 
+                # here get file fomat
+                pathF = template.split(".")
+                formatF = pathF[len(pathF)-1]
+                # save template with opp name
+                target = folder + "/" + opp + "."+ formatF
+                shutil.copy(template, target)
+                '''export to csv'''
+                for layer in layers: # treat per layer
+                    if layer != False:
+                        docName = False
+                        # create csv file
+                        if "gc" in layer.name() or "GC" in layer.name() or "Gc" in layer.name():
+                            docName = folder+"/gc.csv"             
+                        elif "synthese" in layer.name() or "Synthese" in layer.name() or "Synthèse" in layer.name() or "synthèse" in layer.name(): 
+                            docName = folder+"/synthese.csv"
+                        # control docname is not wrong
+                        if docName != False:
+                            output_file = open(docName,"w")
+                            # get and add fields to csv
+                            fields = layer.pendingFields()
+                            fieldname = [field.name() for field in fields]
+                            lineField = line = ",".join(fieldname) + "\n"
+                            unicode_fields = lineField.encode("utf-8")                                        
+                            output_file.write(unicode_fields)
+                            # filter features to add to csv
+                            features = layer.getFeatures()                                       
+                            for f in features:                      
+                                # get attribute  
+                                attr = [el for el in f.attributes()]
+                                # parse all feature's values
+                                for val in range(len(attr)):
+                                    item = attr[val]                                                                                       
+                                    if item == opp:                                         
+                                        find = self.isInList(val, listOpp)                                
+                                        # if feature is search write in csv
+                                        if find != False or find > -1:
+                                            line = ",".join(unicode(f[x]) for x in fieldname) + "\n"
+                                            unicode_line = line.encode("utf-8")                                
+                                            output_file.write(unicode_line)                        
+                            output_file.close()                                                    
     def updateCbId(self,val,combo,st):        
         """We begin by activate state combo and load this combo by states values"""
         self.cbUpdate(st, "statut")
@@ -435,8 +448,14 @@ class AdnReport:
             combo.clear()            
             combo.addItem("Select id")
             combo.setEnabled(False)
-            
 
+    def controlInput(self):
+        filePath = self.dlg.pathTpl.text()
+        folderPath = self.dlg.pathFolder.text()
+        if len(self.cbStateEl(self.dlg.cbOpp))<1 or not os.path.exists(filePath) or not os.path.exists(folderPath):
+            self.dlg.textInfos.setText("Informations are missing or incorrects !")          
+        else :             
+            return self.createFile()
     """Init combo elements"""
     def initCb (self, cb, cbId, cbSt):
         #load layer list to combobox        
@@ -470,7 +489,7 @@ class AdnReport:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-            # Do something useful here - delete the line containing pass and
-            self.createFile()
+            # Do something useful here - delete the line containing pass and            
+            self.controlInput()
             # substitute with your code.
             pass
